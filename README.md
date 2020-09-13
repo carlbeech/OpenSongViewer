@@ -41,12 +41,13 @@ Documentation User Guide
 
 When you open the viewer, you should have a main screen split broadly into three main sections:
 
-Main     |  Song Chords
-Song     |  and lyrics
-List     |
----------|
-Controls |
-
+```
+Main          |  Song Chords
+Song          |  and lyrics
+List          |
+--------------|
+Controls      |
+```
 
 The Controls section has a number of controls:
 * Add - bring up a file selection so you can choose an OpenSong song to add to the main song list.
