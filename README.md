@@ -1,8 +1,7 @@
 # OpenSongViewer
 A windows client for OpenSong written in Python3/Qt5 - for allows you to create/edit/view song files which contain lyrics and chords - use as an electronic songbook - for Windows clients.
 
-Features:
-=========
+# Features:
 
 * Can open songs in the 'OpenSong' xml file format
 * You can open a number of songs into a list, and jump between songs by clicking on the song name
@@ -11,16 +10,14 @@ Features:
 * You can edit any existing songs, or create new ones within the program itself.
 
 
-HISTORY
-=======
+# HISTORY
 
 ### V0.1
 
 - Initial release
 
 
-Description
-===========
+# Description
 
 I've been using OpenSong for a while now - the concept has been both simple, yet versitile enough to use on a daily basis when playing 'live' - I've especially liked the ability to transpose any song into any key I desire - its meant I've not had to carry around multiple copies of song sheets with me.
 
@@ -31,13 +28,11 @@ Recently, my Android tablet has shown signs of breaking down, however, I've got 
 OpenSongViewer is written in Python3 and QT5 - and while you can run this from source code, I've also created stand-alone an executable version using PyInstaller (note it takes about 15 seconds to start up - please be patient.
 
 
-Notes
-=====
+## Notes
 
 This is the first version of the program, and while I've successfully been using it, there's no-doubt there's bugs in the code! At this point its also very untidy.
 
-Documentation User Guide
-========================
+# Documentation / User Guide
 
 When you open the viewer, you should have a main screen split broadly into three main sections:
 
@@ -75,8 +70,7 @@ Song List:
 
 NOTE: every time you transpose or edit a song in the song list, the song list is saved - so if the program crashes, then you can re-load the song list immediately.
 
-The New / Edit screen
----------------------
+## The New / Edit screen
 The editor window consists of three parts:
 * The song (file) name - note this is the file name that is used
 * The key - a pull down list so you can select the key of the song
@@ -101,7 +95,20 @@ Note: [===] means break column - i.e. shift to the next column.
  
 Click OK to save the song (it saves to the file as well as the Main Song List).
  
-The Preferences screen
-----------------------
+## The Preferences screen
 At this point, the preferences screen simply allows you to select the default location where song files are kept (unless told otherwise, the program will use the folder where the program is.
 
+
+# Q & A
+
+Q) Do I need to use the main OpenSong app (http://www.opensong.org/)?
+A) Not necessarily - you're able to create songs within this program directly, however, you are able to open songs that have been created within OpenSong, and you should be able to open and use songs generated within this program within the main OpenSong app / Android app etc.
+
+Q) OpenSong has a number of other facilities and data - will these be implemented?
+A) In short, no - my intention is to create a simple viewer to effectively replace my (dying) android tablet's app - so I'm interested in what I'm able to use to facilitate playing the song - so I'm not necessarily concentrating on data items such as author etc.
+
+Q) I don't like courier font - we don't you use Ariel etc?
+A) Part of the simplicity of the OpenSong format is that you line up chords with the words by simply using spaces - if you use a proportional font such as Ariel, then the chords wouldn't match up with the words.
+
+Q) The text is a bit small / large /doesn't fit my screen...
+A) Being able to set the font size is something I'm thinking about... potentially on a song-by-song basis.
