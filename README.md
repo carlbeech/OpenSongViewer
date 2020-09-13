@@ -82,7 +82,7 @@ The editor window consists of three parts:
 * The editor text box
 
 The editor window is a plain text box which is set to courier font - it is non-proportionally spaced so that you can set the positioning of chords e.g.
-
+```
 .Bb  Dm  C
  
 [Verse 1]
@@ -92,7 +92,7 @@ The editor window is a plain text box which is set to courier font - it is non-p
  You bring light to the darkness
 .        Bb           Dm 
  You give hope, You restore
- 
+```
 Lines beginning with '.' are chord lines - when you click on transpose keys, these are updated.
 Ensure you put a space at the beginning of lines of lyrics - so that this marries up with the space taken up by the '.' in the chords lines.
 Likes with [ and ] are verses and are highlighted when viewing the song.
