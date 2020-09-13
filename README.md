@@ -112,3 +112,6 @@ A) Part of the simplicity of the OpenSong format is that you line up chords with
 
 Q) The text is a bit small / large /doesn't fit my screen...
 A) Being able to set the font size is something I'm thinking about... potentially on a song-by-song basis.
+
+Q) Is there a linux version?
+A) It should be executable under linux from python source, but as the directory separators are different, it probably needs some modifications - watch this space.... :-)
