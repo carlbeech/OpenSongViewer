@@ -1,5 +1,5 @@
 # OpenSongViewer
-A windows client for OpenSong written in Python3/Qt5 - for allows you to create/edit/view song files which contain lyrics and chords - use as an electronic songbook - for Windows clients.
+A windows and linux client for OpenSong written in Python3/Qt5 - for allows you to create/edit/view song files which contain lyrics and chords - use as an electronic songbook - for Windows clients.
 
 # Features:
 
@@ -16,6 +16,12 @@ A windows client for OpenSong written in Python3/Qt5 - for allows you to create/
 
 - Initial release
 
+### V0.2
+
+- Added browse button to preferences dialog.
+- Start of code cleanup
+- Initial conversion to allow for linux filesystems.
+- Internal update to switch to use 'dictionary' (key/value pairs) to hold preferences. (Auto updates V0.1 preferences)
 
 # Description
 
@@ -36,13 +42,7 @@ This is the first version of the program, and while I've successfully been using
 
 When you open the viewer, you should have a main screen split broadly into three main sections:
 
-```
-Main          |  Song Chords
-Song          |  and lyrics
-List          |
---------------|
-Controls      |
-```
+![Main Window](webimages/MainWindow.png)
 
 The Controls section has a number of controls:
 * Add - bring up a file selection so you can choose an OpenSong song to add to the main song list.
@@ -77,17 +77,9 @@ The editor window consists of three parts:
 * The editor text box
 
 The editor window is a plain text box which is set to courier font - it is non-proportionally spaced so that you can set the positioning of chords e.g.
-```
-.Bb  Dm  C
- 
-[Verse 1]
-.        Bb             Dm
- You give life, You are love
-.         C
- You bring light to the darkness
-.        Bb           Dm 
- You give hope, You restore
-```
+
+![Edit Window](webimages/EditWindow.png)
+
 Lines beginning with '.' are chord lines - when you click on transpose keys, these are updated.
 Ensure you put a space at the beginning of lines of lyrics - so that this marries up with the space taken up by the '.' in the chords lines.
 Likes with [ and ] are verses and are highlighted when viewing the song.
@@ -97,6 +89,8 @@ Click OK to save the song (it saves to the file as well as the Main Song List).
  
 ## The Preferences screen
 At this point, the preferences screen simply allows you to select the default location where song files are kept (unless told otherwise, the program will use the folder where the program is.
+
+![Prefs Window](webimages/PreferencesWindow.png)
 
 
 # Q & A
