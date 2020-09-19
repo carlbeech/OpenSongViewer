@@ -9,6 +9,8 @@ A windows and linux client for OpenSong written in Python3/Qt5 - for allows you 
 * You can save the song list and load it back in at a later point in time - it'll retain any key-transpositions.
 * You can edit any existing songs, or create new ones within the program itself.
 
+# Binaries
+Stand alone binary releases are in the 'Releases' area - go to https://github.com/carlbeech/OpenSongViewer/releases
 
 # HISTORY
 
@@ -106,6 +108,3 @@ A) Part of the simplicity of the OpenSong format is that you line up chords with
 
 Q) The text is a bit small / large /doesn't fit my screen...
 A) Being able to set the font size is something I'm thinking about... potentially on a song-by-song basis.
-
-Q) Is there a linux version?
-A) It should be executable under linux from python source, but as the directory separators are different, it probably needs some modifications - watch this space.... :-)
