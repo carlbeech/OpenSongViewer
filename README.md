@@ -96,6 +96,24 @@ At this point, the preferences screen simply allows you to select the default lo
 ![Prefs Window](webimages/PreferencesWindow.png)
 
 
+# Future Improvements
+Here's a list of alterations that I'm actively considering (please drop me a line if there's other things that would be useful)
+
+* Setting default font size within the preferences for song text
+* Setting font size on a song-by-song basis (it would use the 'user' field within the OpenSong file format
+* Updated method of Chord positioning
+* In preferences, set preferences for sharp and flat chords
+
+## Updated method of Chord positioning
+At the moment, a procedure works along a chord line (which begins with '.') and effectively does a string replace.
+While this works, it can mean chords move slightly in comparison to the lyrics which are on the next line.
+An alternative would be to do an initial scan of the chord line, noting where each of the chords is (i.e. position in the line), and when each chord is transposed, then ensure its at the right location.
+
+## Chord preferences for sharp and flats
+At the moment, the program is hard wired for particular chords - e.g. if it locates a G#, it replaces this with Ab.
+In the preferences, it should be possible to present a list so the user can define which chords they're used to working with - and be able to select on a one-by-one basis.. I'm thinking a radio-button for each sharp-flat pair.
+
+
 # Q & A
 
 Q) Do I need to use the main OpenSong app (http://www.opensong.org/)?
