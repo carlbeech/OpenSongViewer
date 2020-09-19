@@ -11,6 +11,7 @@ A windows and linux client for OpenSong written in Python3/Qt5 - for allows you 
 
 # Binaries
 Stand alone binary releases are in the 'Releases' area - go to https://github.com/carlbeech/OpenSongViewer/releases
+(Under the release heading, click on 'Assets')
 
 # HISTORY
 
