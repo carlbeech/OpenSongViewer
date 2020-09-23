@@ -26,6 +26,13 @@ Stand alone binary releases are in the 'Releases' area - go to https://github.co
 - Initial conversion to allow for linux filesystems.
 - Internal update to switch to use 'dictionary' (key/value pairs) to hold preferences. (Auto updates V0.1 preferences)
 
+### V0.3
+
+- Added 'About' dialog
+- Updated preference setting - you can select font size of the main display
+- Updated preference setting - you can select which #/b you want to use
+  e.g.  Do you want to see C# or Db in your songs.
+
 # Description
 
 I've been using OpenSong for a while now - the concept has been both simple, yet versitile enough to use on a daily basis when playing 'live' - I've especially liked the ability to transpose any song into any key I desire - its meant I've not had to carry around multiple copies of song sheets with me.
@@ -91,7 +98,10 @@ Note: [===] means break column - i.e. shift to the next column.
 Click OK to save the song (it saves to the file as well as the Main Song List).
  
 ## The Preferences screen
-At this point, the preferences screen simply allows you to select the default location where song files are kept (unless told otherwise, the program will use the folder where the program is.
+The preferences screen simply allows you to 
+* Select the default location where song files are kept (unless told otherwise, the program will use the folder where the program is.)
+* You're also able to select the font size used in the main window
+* Select your preference for each sharp/flat combination
 
 ![Prefs Window](webimages/PreferencesWindow.png)
 
@@ -99,17 +109,17 @@ At this point, the preferences screen simply allows you to select the default lo
 # Future Improvements
 Here's a list of alterations that I'm actively considering (please drop me a line if there's other things that would be useful)
 
-* Setting default font size within the preferences for song text
+* Setting default font size within the preferences for song text - _Released in 0.3_
 * Setting font size on a song-by-song basis (it would use the 'user' field within the OpenSong file format
 * Updated method of Chord positioning
-* In preferences, set preferences for sharp and flat chords
+* In preferences, set preferences for sharp and flat chords - _Released in 0.3_
 
 ## Updated method of Chord positioning
 At the moment, a procedure works along a chord line (which begins with '.') and effectively does a string replace.
 While this works, it can mean chords move slightly in comparison to the lyrics which are on the next line.
 An alternative would be to do an initial scan of the chord line, noting where each of the chords is (i.e. position in the line), and when each chord is transposed, then ensure its at the right location.
 
-## Chord preferences for sharp and flats
+## Chord preferences for sharp and flats - Released in 0.3
 At the moment, the program is hard wired for particular chords - e.g. if it locates a G#, it replaces this with Ab.
 In the preferences, it should be possible to present a list so the user can define which chords they're used to working with - and be able to select on a one-by-one basis.. I'm thinking a radio-button for each sharp-flat pair.
 

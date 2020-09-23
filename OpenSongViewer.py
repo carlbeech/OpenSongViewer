@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import QMessageBox
 from EditWindow import Ui_Dialog
 from MainWindow import Ui_MainWindow
 from Prefs import Ui_PrefsEditor
+from About import Ui_About
 
 
 #   OpenSongViewer
@@ -31,8 +32,41 @@ from Prefs import Ui_PrefsEditor
 #           Start of code cleanup
 #           Initial conversion to allow for linux filesystems.
 #           Switch to use 'dictionary' (key/value pairs) to hold preferences.
+#   0.3 -   Improvements to preferences
+#           *   Default font size
+#           *   Sharps/Flats preferences.
+#           *   About window
 
-VersionNumber = "0.2"
+VersionNumber = "0.3"
+VersionInformation = "Release 20/9/20 - Carl Beech"
+
+#   Initialisation of Edit Window
+class AboutWindow(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_About()
+        self.ui.setupUi(self)
+
+        #   Copy variable values for single song into on-screen fields.
+        AboutText=              "<html><head>"
+        AboutText = AboutText + "<style>"
+        AboutText = AboutText + "body { background-color: #FFFFFF;} "
+        AboutText = AboutText + "p { font-size: 25px; margin: 0px; align=center;} "
+        AboutText = AboutText + "</style>"
+        AboutText = AboutText + "</head>"
+        AboutText = AboutText + "<body>"
+        AboutText = AboutText + "<h4>Open Song Viewer</h4><br>"
+        AboutText = AboutText + "<p>Version "+VersionNumber+"</p>"
+        AboutText = AboutText + "<p>Carl Beech 2020</p>"
+        AboutText = AboutText + "<p><a href='https://github.com/carlbeech/OpenSongViewer'>https://github.com/carlbeech/OpenSongViewer</a></p>"
+        AboutText = AboutText + "</body>"
+        AboutText = AboutText + "</html>"
+
+        self.ui.aboutMessage.setHtml( AboutText )
+
+        #   Set the window up.
+        self.show()
 
 #   Initialisation of Edit Window
 class EditWindow(QDialog):
@@ -63,6 +97,34 @@ class Prefs(QDialog):
 
         #   Copy variable values into on-screen fields
         self.ui.SongDirectory.setText(PreferencesData['SONGDIR'])
+
+        self.ui.DefaultFontSize.setCurrentText(PreferencesData['DEFAULTFONTSIZE'])
+
+        if PreferencesData['SHARPFLAT_C'] == 'C#':
+            self.ui.radioButton_Cs.setChecked(True)
+        else:
+            self.ui.radioButton_Db.setChecked(True)
+
+        if PreferencesData['SHARPFLAT_D'] == 'D#':
+            self.ui.radioButton_Ds.setChecked(True)
+        else:
+            self.ui.radioButton_Eb.setChecked(True)
+
+        if PreferencesData['SHARPFLAT_F'] == 'F#':
+            self.ui.radioButton_Fs.setChecked(True)
+        else:
+            self.ui.radioButton_Gb.setChecked(True)
+
+        if PreferencesData['SHARPFLAT_G'] == 'G#':
+            self.ui.radioButton_Gs.setChecked(True)
+        else:
+            self.ui.radioButton_Ab.setChecked(True)
+
+        if PreferencesData['SHARPFLAT_A'] == 'A#':
+            self.ui.radioButton_As.setChecked(True)
+        else:
+            self.ui.radioButton_Bb.setChecked(True)
+
 
         #   Set the window up
         self.show()
@@ -130,6 +192,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.HomeDirectory = os.getcwd()
         self.SongPreferencesFileName = self.HomeDirectory+'\\OpenSongViewerPrefs.json'
 
+        self.SongText.setText('Hello there<br><br><i>OpenSongViewer version '+VersionNumber+'<br><br>'+VersionInformation+'</i>')
+
         # try to pull in the preferences
         try:
             with open(self.SongPreferencesFileName) as f:
@@ -137,8 +201,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         except:
             # none found - set default prefs.
-            self.SongPreferences['PREFSVER'] = '0.2'
+            self.SongPreferences['PREFSVER'] = '0.3'
             self.SongPreferences['SONGDIR'] = self.HomeDirectory
+            self.SongPreferences['DEFAULTFONTSIZE'] = '25'
+            self.SongPreferences['SHARPFLAT_C'] = 'C#'
+            self.SongPreferences['SHARPFLAT_D'] = 'D#'
+            self.SongPreferences['SHARPFLAT_F'] = 'F#'
+            self.SongPreferences['SHARPFLAT_G'] = 'G#'
+            self.SongPreferences['SHARPFLAT_A'] = 'A#'
 
         if type(self.SongPreferences) is list:
             # V0.1 preferences used lists instead of dict - convert and re-save
@@ -151,6 +221,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # Overwrite old file
             with open(self.SongPreferencesFileName, 'w') as f:
                 json.dump(self.SongPreferences, f)
+
+        if self.SongPreferences['PREFSVER'] == '0.2':
+            #   Upgrade preferences values - put in default values.
+            self.SongPreferences['PREFSVER'] = '0.3'
+            self.SongPreferences['DEFAULTFONTSIZE'] = '25'
+            self.SongPreferences['SHARPFLAT_C'] = 'C#'
+            self.SongPreferences['SHARPFLAT_D'] = 'D#'
+            self.SongPreferences['SHARPFLAT_F'] = 'F#'
+            self.SongPreferences['SHARPFLAT_G'] = 'G#'
+            self.SongPreferences['SHARPFLAT_A'] = 'A#'
 
 
         self.InterpretPreferences()
@@ -173,6 +253,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionSave_Song_List_As.triggered.connect(self.SaveSongListAs)
 
         self.actionPreferences.triggered.connect(self.UpdatePrefs)
+        self.actionAbout.triggered.connect(self.AboutWindow)
 
 
     #   Do anything based on preferences settings - copy values to variables etc.
@@ -191,6 +272,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return "YES"
         else:
             return "NO"
+
+    #   General routine to ask a query on screen
+    def OkMessage(self,QueryTitle,QueryText):
+
+        resp = QMessageBox.question(self, QueryTitle, QueryText, QMessageBox.Ok, QMessageBox.Ok)
 
 
     #   Save the current song list, but specify a location.
@@ -255,12 +341,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # Add the files to the on-screen list
             Ptr = 0
 
-            while Ptr < len(self.SongDataList):
-                FName = self.SongDataList[Ptr][4]
-                item = QStandardItem(FName)
-                self.SongListModel.appendRow(item)
-                Ptr = Ptr+1
-
+            try:
+                while Ptr < len(self.SongDataList):
+                    FName = self.SongDataList[Ptr][4]
+                    item = QStandardItem(FName)
+                    self.SongListModel.appendRow(item)
+                    Ptr = Ptr+1
+            except:
+                self.OkMessage('Load error','Song list file is not compatible with this version - sorry')
 
     #   Given a song name, find the location within the main song array and return the number
     def LocateSong(self,SongName):
@@ -370,9 +458,31 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if IsMinor == 1:
             OutputString = OutputString+"m"
 
-        OutputString = OutputString.replace('G#','Ab')
-        OutputString = OutputString.replace('A#','Bb')
-        OutputString = OutputString.replace('D#','Eb')
+        if self.SongPreferences['SHARPFLAT_C'] == 'C#':
+            OutputString = OutputString.replace('Db', 'C#')
+        if self.SongPreferences['SHARPFLAT_C'] == 'Db':
+            OutputString = OutputString.replace('C#', 'Db')
+
+        if self.SongPreferences['SHARPFLAT_D'] == 'D#':
+            OutputString = OutputString.replace('Eb', 'D#')
+        if self.SongPreferences['SHARPFLAT_D'] == 'Eb':
+            OutputString = OutputString.replace('D#', 'Eb')
+
+        if self.SongPreferences['SHARPFLAT_F'] == 'F#':
+            OutputString = OutputString.replace('Gb', 'F#')
+        if self.SongPreferences['SHARPFLAT_F'] == 'Gb':
+            OutputString = OutputString.replace('F#', 'Gb')
+
+        if self.SongPreferences['SHARPFLAT_G'] == 'G#':
+            OutputString = OutputString.replace('Ab', 'G#')
+        if self.SongPreferences['SHARPFLAT_G'] == 'Ab':
+            OutputString = OutputString.replace('G#', 'Ab')
+
+        if self.SongPreferences['SHARPFLAT_A'] == 'A#':
+            OutputString = OutputString.replace('Bb', 'A#')
+        if self.SongPreferences['SHARPFLAT_A'] == 'Bb':
+            OutputString = OutputString.replace('A#', 'Bb')
+
 
         return OutputString
 
@@ -435,7 +545,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             SongTextHeader = "<html><head>"
             SongTextHeader = SongTextHeader + "<style>"
             SongTextHeader = SongTextHeader + "body { background-color: #555555;} "
-            SongTextHeader = SongTextHeader + "p { font-size: 25px; margin: 0px;} "
+            SongTextHeader = SongTextHeader + "p { font-size: "+self.SongPreferences['DEFAULTFONTSIZE']+"px; margin: 0px;} "
             SongTextHeader = SongTextHeader + "table { width: 100%; border: 2px solid black; padding 20px;} "
             SongTextHeader = SongTextHeader + "tr { width: 100%; border: 2px solid black; padding 20px;} "
             SongTextHeader = SongTextHeader + "td { border: 2px solid black; padding 5px; background-color: #eeeeee;} "
@@ -776,8 +886,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print("Success!")
 
             #   Pick up the values from screen
-            self.SongPreferences['PREFSVER'] = '0.2'
+            self.SongPreferences['PREFSVER'] = '0.3'
             self.SongPreferences['SONGDIR'] = dlg.ui.SongDirectory.text()
+
+            self.SongPreferences['DEFAULTFONTSIZE'] = dlg.ui.DefaultFontSize.currentText()
+
+            if dlg.ui.radioButton_Cs.isChecked():
+                self.SongPreferences['SHARPFLAT_C'] = 'C#'
+            else:
+                self.SongPreferences['SHARPFLAT_C'] = 'Db'
+
+            if dlg.ui.radioButton_Ds.isChecked():
+                self.SongPreferences['SHARPFLAT_D'] = 'D#'
+            else:
+                self.SongPreferences['SHARPFLAT_D'] = 'Eb'
+
+            if dlg.ui.radioButton_Fs.isChecked():
+                self.SongPreferences['SHARPFLAT_F'] = 'F#'
+            else:
+                self.SongPreferences['SHARPFLAT_F'] = 'Gb'
+
+            if dlg.ui.radioButton_Gs.isChecked():
+                self.SongPreferences['SHARPFLAT_G'] = 'G#'
+            else:
+                self.SongPreferences['SHARPFLAT_G'] = 'Ab'
+
+            if dlg.ui.radioButton_As.isChecked():
+                self.SongPreferences['SHARPFLAT_A'] = 'A#'
+            else:
+                self.SongPreferences['SHARPFLAT_A'] = 'Bb'
 
             with open(self.SongPreferencesFileName, 'w') as f:
                 json.dump(self.SongPreferences, f)
@@ -787,6 +924,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         else:
             print("Cancel!")
+
+    def AboutWindow(self):
+        #   Initialise window
+        dlg = AboutWindow()
+
+        #   Activate preferences screen - user just has to click on OK
+        dlg.exec_()
 
 
 
