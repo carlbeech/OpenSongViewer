@@ -33,6 +33,8 @@ Stand alone binary releases are in the 'Releases' area - go to https://github.co
 - Updated preference setting - you can select which #/b you want to use
   e.g.  Do you want to see C# or Db in your songs.
 
+  NOTE: Due to a change in data structure, 0.3 will not be able to open Song Lists that were saved under version 0.1.
+
 # Description
 
 I've been using OpenSong for a while now - the concept has been both simple, yet versitile enough to use on a daily basis when playing 'live' - I've especially liked the ability to transpose any song into any key I desire - its meant I've not had to carry around multiple copies of song sheets with me.
