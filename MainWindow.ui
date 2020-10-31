@@ -120,11 +120,26 @@
              <property name="font">
               <font>
                <family>Arial</family>
-               <pointsize>13</pointsize>
+               <pointsize>15</pointsize>
               </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::WinPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Sunken</enum>
+             </property>
+             <property name="lineWidth">
+              <number>1</number>
              </property>
              <property name="dragDropMode">
               <enum>QAbstractItemView::InternalMove</enum>
+             </property>
+             <property name="flow">
+              <enum>QListView::TopToBottom</enum>
              </property>
              <property name="isWrapping" stdset="0">
               <bool>false</bool>
@@ -138,7 +153,7 @@
              <property name="gridSize">
               <size>
                <width>0</width>
-               <height>100</height>
+               <height>80</height>
               </size>
              </property>
             </widget>

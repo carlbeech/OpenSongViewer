@@ -17,7 +17,7 @@ Stand alone binary releases are in the 'Releases' area - go to https://github.co
 
 ### V0.1
 
-- Initial release
+- Initial release.
 
 ### V0.2
 
@@ -34,6 +34,11 @@ Stand alone binary releases are in the 'Releases' area - go to https://github.co
   e.g.  Do you want to see C# or Db in your songs.
 
   NOTE: Due to a change in data structure, 0.3 will not be able to open Song Lists that were saved under version 0.1.
+
+### V0.4
+
+- Preferences now allows you to select number of lines to a page (column split)
+- When editing an existing file, program now preserves other information from the file (e.g. author, CCLI number etc) that may have been entered by OpenSong main program. If the song is a new song, then all fields are left blank apart from Song Title, Lyrics and (base) key.
 
 # Description
 

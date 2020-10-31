@@ -36,9 +36,12 @@ from About import Ui_About
 #           *   Default font size
 #           *   Sharps/Flats preferences.
 #           *   About window
+#   0.4 -   Added page size to preferences window
+#           When saving, Copy all data within the existing song forward
+#           so no details are lost.
 
-VersionNumber = "0.3"
-VersionInformation = "Release 20/9/20 - Carl Beech"
+VersionNumber = "0.4"
+VersionInformation = "Release 25/10/20 - Carl Beech"
 
 #   Initialisation of Edit Window
 class AboutWindow(QDialog):
@@ -99,6 +102,8 @@ class Prefs(QDialog):
         self.ui.SongDirectory.setText(PreferencesData['SONGDIR'])
 
         self.ui.DefaultFontSize.setCurrentText(PreferencesData['DEFAULTFONTSIZE'])
+
+        self.ui.PageSize.setCurrentText(PreferencesData['DEFAULTPAGESIZE'])
 
         if PreferencesData['SHARPFLAT_C'] == 'C#':
             self.ui.radioButton_Cs.setChecked(True)
@@ -201,9 +206,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         except:
             # none found - set default prefs.
-            self.SongPreferences['PREFSVER'] = '0.3'
+            self.SongPreferences['PREFSVER'] = '0.4'
             self.SongPreferences['SONGDIR'] = self.HomeDirectory
             self.SongPreferences['DEFAULTFONTSIZE'] = '25'
+            self.SongPreferences['DEFAULTPAGESIZE'] = '38'
             self.SongPreferences['SHARPFLAT_C'] = 'C#'
             self.SongPreferences['SHARPFLAT_D'] = 'D#'
             self.SongPreferences['SHARPFLAT_F'] = 'F#'
@@ -231,6 +237,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.SongPreferences['SHARPFLAT_F'] = 'F#'
             self.SongPreferences['SHARPFLAT_G'] = 'G#'
             self.SongPreferences['SHARPFLAT_A'] = 'A#'
+
+        if self.SongPreferences['PREFSVER'] == '0.3':
+            self.SongPreferences['PREFSVER'] = '0.4'
+            self.SongPreferences['DEFAULTPAGESIZE'] = '38'
 
 
         self.InterpretPreferences()
@@ -615,7 +625,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     OutputLine = '\n '
 
                 # If we're too far down, go to another display column
-                if SongTextLineNumber > 38 or "===" in TextLine:
+                if SongTextLineNumber > int(self.SongPreferences['DEFAULTPAGESIZE']) or "===" in TextLine:
                     SongTextLineNumber = 1
                     OutputLine = OutputLine+'</td><td>'
                     # print("NewLine")
@@ -703,36 +713,71 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             if os.sep == '\\':
                 Fname = Fname.replace('/', '\\')
 
-            #   Work out the text to save.
-            New_FileName = Fname
-            New_SongText = '<?xml version="1.0" encoding="UTF-8"?>\n'
-            New_SongText = New_SongText + '<song>\n'
-            New_SongText = New_SongText + '<title>'+SingleSongData[4]+'</title>\n'
-            New_SongText = New_SongText + '  <lyrics>'
-            New_SongText = New_SongText + SingleSongData[1]+'\n'
-            New_SongText = New_SongText + '  </lyrics>\n'
-            New_SongText = New_SongText + '<author></author>\n'
-            New_SongText = New_SongText + '<copyright></copyright>\n'
-            New_SongText = New_SongText + '<hymn_number></hymn_number>\n'
-            New_SongText = New_SongText + '<presentation></presentation>\n'
-            New_SongText = New_SongText + '<ccli></ccli>\n'
-            New_SongText = New_SongText + '<capo print = "false" ></capo>\n'
-            New_SongText = New_SongText + '<key>'+SingleSongData[2]+'</key>\n'
-            New_SongText = New_SongText + '<aka></aka>\n'
-            New_SongText = New_SongText + '<key_line></key_line>\n'
-            New_SongText = New_SongText + '<user1></user1>\n'
-            New_SongText = New_SongText + '<user2></user2>\n'
-            New_SongText = New_SongText + '<user3></user3>\n'
-            New_SongText = New_SongText + '<theme></theme>\n'
-            New_SongText = New_SongText + '<linked_songs/>\n'
-            New_SongText = New_SongText + '<tempo></tempo>\n'
-            New_SongText = New_SongText + '<time_sig></time_sig>\n'
-            New_SongText = New_SongText + '<backgrounds resize = "screen" keep_aspect = "false" link = "false" background_as_text = "false" />\n'
-            New_SongText = New_SongText + '</song>\n'
+            # 0.4: Open the original song we're going to overwrite
+            #      and grab the data from it - so that we preserve
+            #      the information when we overwrite
+            #      if the song is 'brand new' then we'll not be able
+            #      to open, and should go through the exception handler
+            #      and we can set default values.
 
-            #   and write out the file
-            with open(New_FileName, 'w') as myfile:
-                myfile.write(New_SongText)
+            # If the file already exists, read the file in and overwrite
+            # individual elements
+            # otherwise create a file from scratch.
+            if os.path.isfile(Fname):
+
+                try:
+                    with open(Fname, 'r') as Originalfile:
+                        SongData = Originalfile.read()
+
+                    # tree contains the tree structure
+                    tree = ET.ElementTree(ET.fromstring(SongData))
+
+                    # Overwrite the items within the XML...
+                    tree.find('title').text = SingleSongData[4]
+                    tree.find('lyrics').text = SingleSongData[1]
+                    tree.find('key').text = SingleSongData[2]
+
+                    # overwrite the original file with the updated values
+                    tree.write(Fname)
+
+                except:
+
+                    self.OkMessage("Problem overwriting file...",sys.exc_info()[0])
+
+            else:
+
+                # the file doesn't exist - so we need to create a new file from scratch
+
+                #   Work out the text to save.
+                New_FileName = Fname
+                New_SongText = '<?xml version="1.0" encoding="UTF-8"?>\n'
+                New_SongText = New_SongText + '<song>\n'
+                New_SongText = New_SongText + '<title>'+SingleSongData[4]+'</title>\n'
+                New_SongText = New_SongText + '  <lyrics>'
+                New_SongText = New_SongText + SingleSongData[1]+'\n'
+                New_SongText = New_SongText + '  </lyrics>\n'
+                New_SongText = New_SongText + '<author></author>\n'
+                New_SongText = New_SongText + '<copyright></copyright>\n'
+                New_SongText = New_SongText + '<hymn_number></hymn_number>\n'
+                New_SongText = New_SongText + '<presentation></presentation>\n'
+                New_SongText = New_SongText + '<ccli></ccli>\n'
+                New_SongText = New_SongText + '<capo print = "false"></capo>\n'
+                New_SongText = New_SongText + '<key>'+SingleSongData[2]+'</key>\n'
+                New_SongText = New_SongText + '<aka></aka>\n'
+                New_SongText = New_SongText + '<key_line></key_line>\n'
+                New_SongText = New_SongText + '<user1></user1>\n'
+                New_SongText = New_SongText + '<user2></user2>\n'
+                New_SongText = New_SongText + '<user3></user3>\n'
+                New_SongText = New_SongText + '<theme></theme>\n'
+                New_SongText = New_SongText + '<linked_songs></linked_songs>\n'
+                New_SongText = New_SongText + '<tempo></tempo>\n'
+                New_SongText = New_SongText + '<time_sig></time_sig>\n'
+                New_SongText = New_SongText + '<backgrounds resize="body" keep_aspect="false" link="false" background_as_text="false"/>\n'
+                New_SongText = New_SongText + '</song>\n'
+
+                #   and write out the file
+                with open(New_FileName, 'w') as myfile:
+                    myfile.write(New_SongText)
 
 
     #   User has clicked on 'Edit'
@@ -890,6 +935,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.SongPreferences['SONGDIR'] = dlg.ui.SongDirectory.text()
 
             self.SongPreferences['DEFAULTFONTSIZE'] = dlg.ui.DefaultFontSize.currentText()
+            self.SongPreferences['DEFAULTPAGESIZE'] = dlg.ui.PageSize.currentText()
 
             if dlg.ui.radioButton_Cs.isChecked():
                 self.SongPreferences['SHARPFLAT_C'] = 'C#'
