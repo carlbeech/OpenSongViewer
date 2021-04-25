@@ -158,6 +158,85 @@
              </property>
             </widget>
            </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Songlist Commands:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QFrame" name="frame">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QPushButton" name="PrevSong">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>60</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>26</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>&lt;-</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="NextSong">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>60</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>26</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>-&gt;</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -213,7 +292,7 @@
              </property>
              <property name="font">
               <font>
-               <pointsize>14</pointsize>
+               <pointsize>11</pointsize>
                <weight>75</weight>
                <bold>true</bold>
               </font>
@@ -231,15 +310,21 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="font">
               <font>
-               <pointsize>14</pointsize>
+               <pointsize>11</pointsize>
                <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
              <property name="text">
-              <string>Del</string>
+              <string>Rem</string>
              </property>
             </widget>
            </item>
@@ -251,9 +336,15 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
              <property name="font">
               <font>
-               <pointsize>14</pointsize>
+               <pointsize>11</pointsize>
                <weight>75</weight>
                <bold>true</bold>
               </font>
@@ -277,7 +368,7 @@
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>80</height>
+            <height>69</height>
            </size>
           </property>
           <property name="frameShape">
@@ -457,12 +548,12 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionNew">
    <property name="text">
-    <string>New</string>
+    <string>New Song</string>
    </property>
   </action>
   <action name="actionEdit">
    <property name="text">
-    <string>Edit</string>
+    <string>Edit song</string>
    </property>
   </action>
   <action name="actionLoad_Song_List">

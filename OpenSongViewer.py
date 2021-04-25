@@ -5,6 +5,8 @@ import xml.etree.ElementTree as ET
 
 #   GUI INCLUDES
 from PyQt5 import QtWidgets
+from PyQt5.Qt import Qt
+from PyQt5.QtCore import QModelIndex
 from PyQt5.QtGui import QStandardItem
 from PyQt5.QtGui import QStandardItemModel
 from PyQt5.QtWidgets import QDialog
@@ -39,14 +41,48 @@ from About import Ui_About
 #   0.4 -   Added page size to preferences window
 #           When saving, Copy all data within the existing song forward
 #           so no details are lost.
+#   0.5 -   Bugfix: if base key is 'B' then transposing doesn't update the
+#                   key displayed on screen.
+#           Improvement: you can now use cursor right/left to move through the
+#                   song list (up/down appear to be caught by the system before
+#                   they are captured by the program, so are not reliable.
+#           Improvement: additional, via preferences - when editing you can
+#                   keep the 'normal' edit using the original base key, or
+#                   you can edit using the current transposed key - this is useful
+#                   if you want to adjust a song that you've transposed - you
+#                   don't have to manually transpose the ammendment back to the
+#                   original key. NOTE: if you edit using the transposed key
+#                   this will _overwrite_ the original base key.
+#                   As part of this, to factor out code main data structures are
+#                   made global.
 
-VersionNumber = "0.4"
-VersionInformation = "Release 25/10/20 - Carl Beech"
+VersionNumber = "0.5"
+VersionInformation = "Release 1/4/21 - Carl Beech"
+
+# SongDataList - main Data structure
+# 0 - full file and path name
+# 1 - lyrics text
+# 2 - Base key
+# 3 - Offset
+# 4 - Basename (just the file name)
+
+SongDataList = []
+SongKeys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+SongKeys_Alt = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+
+# V0.2: switch to use dictionary so can use a key:value pair.
+SongPreferences = {'DUMMY': 'DUMMY'}
+
 
 #   Initialisation of Edit Window
 class AboutWindow(QDialog):
 
     def __init__(self):
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         super().__init__()
         self.ui = Ui_About()
         self.ui.setupUi(self)
@@ -75,6 +111,11 @@ class AboutWindow(QDialog):
 class EditWindow(QDialog):
     FullSongPath=''
     def __init__(self,SongData):
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         super().__init__()
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
@@ -82,15 +123,30 @@ class EditWindow(QDialog):
         #   Copy variable values for single song into on-screen fields.
         self.FullSongPath=SongData[0]
         self.ui.FName.setText(SongData[4])
-        self.ui.SongText.setPlainText(SongData[1])
-        self.ui.SongKey.setCurrentText(SongData[2])
+
+        SongText=SongData[1]
+        SongKey=SongData[2]
+        SongOffset = SongData[3]
+        if SongPreferences['EDIT_USE_ORIGINALKEY'] == 'ORIGINALKEY':
+            self.ui.SongText.setPlainText(SongText)
+            self.ui.SongKey.setCurrentText(SongKey)
+        else:
+            ModifiedSongText=Derive_Song_Text( "NO", SongText, SongKey, SongOffset)
+            ActualSongKey = Derive_Actual_Song_Key(SongKey, SongOffset)
+            self.ui.SongText.setPlainText(ModifiedSongText)
+            self.ui.SongKey.setCurrentText(SongKeys_Alt[ActualSongKey])
 
         #   Set the window up.
         self.show()
 
 #   Initialisation of Preferences Window
 class Prefs(QDialog):
-    def __init__(self,PreferencesData):
+    def __init__(self):
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         super().__init__()
         self.ui = Ui_PrefsEditor()
         self.ui.setupUi(self)
@@ -99,36 +155,42 @@ class Prefs(QDialog):
         self.ui.pushBrowse.clicked.connect(self.BrowseSelected)
 
         #   Copy variable values into on-screen fields
-        self.ui.SongDirectory.setText(PreferencesData['SONGDIR'])
+        self.ui.SongDirectory.setText(SongPreferences['SONGDIR'])
 
-        self.ui.DefaultFontSize.setCurrentText(PreferencesData['DEFAULTFONTSIZE'])
+        self.ui.DefaultFontSize.setCurrentText(SongPreferences['DEFAULTFONTSIZE'])
 
-        self.ui.PageSize.setCurrentText(PreferencesData['DEFAULTPAGESIZE'])
+        self.ui.PageSize.setCurrentText(SongPreferences['DEFAULTPAGESIZE'])
 
-        if PreferencesData['SHARPFLAT_C'] == 'C#':
+        if SongPreferences['SHARPFLAT_C'] == 'C#':
             self.ui.radioButton_Cs.setChecked(True)
         else:
             self.ui.radioButton_Db.setChecked(True)
 
-        if PreferencesData['SHARPFLAT_D'] == 'D#':
+        if SongPreferences['SHARPFLAT_D'] == 'D#':
             self.ui.radioButton_Ds.setChecked(True)
         else:
             self.ui.radioButton_Eb.setChecked(True)
 
-        if PreferencesData['SHARPFLAT_F'] == 'F#':
+        if SongPreferences['SHARPFLAT_F'] == 'F#':
             self.ui.radioButton_Fs.setChecked(True)
         else:
             self.ui.radioButton_Gb.setChecked(True)
 
-        if PreferencesData['SHARPFLAT_G'] == 'G#':
+        if SongPreferences['SHARPFLAT_G'] == 'G#':
             self.ui.radioButton_Gs.setChecked(True)
         else:
             self.ui.radioButton_Ab.setChecked(True)
 
-        if PreferencesData['SHARPFLAT_A'] == 'A#':
+        if SongPreferences['SHARPFLAT_A'] == 'A#':
             self.ui.radioButton_As.setChecked(True)
         else:
             self.ui.radioButton_Bb.setChecked(True)
+
+        #   0.5 - 20210402 - add edit using original key or transposed...
+        if SongPreferences['EDIT_USE_ORIGINALKEY'] == 'ORIGINALKEY':
+            self.ui.EditOriginalKey.setChecked(True)
+        else:
+            self.ui.EditTransposedKey.setChecked(True)
 
 
         #   Set the window up
@@ -136,6 +198,11 @@ class Prefs(QDialog):
 
     #   Browse to locate song directory.
     def BrowseSelected(self):
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
 
         try:
 
@@ -150,22 +217,218 @@ class Prefs(QDialog):
 
 
 #   *****************************************************************************
+#   Support routines - used by multiple windows.
+
+#   Given a base key, and an offset, work out the actual key and return that number
+def Derive_Actual_Song_Key(SongBaseKey, SongOffset):
+    global SongDataList
+    global SongKeys
+    global SongKeys_Alt
+    global SongPreferences
+
+    # Work out the actual key
+    # i.e. the original key + the offset
+    Ptr3 = 0
+
+    ActualSongKey = -1
+
+    # Bugfix: 20210401: When 'B' wasn't locating the songkey. - updated from 11 to 12...
+    while Ptr3 < 12 and ActualSongKey == -1:
+        if SongKeys[Ptr3] == SongBaseKey or SongKeys_Alt[Ptr3] == SongBaseKey:
+            ActualSongKey = Ptr3
+        Ptr3 += 1
+
+    if ActualSongKey > -1:
+        # i.e. the key was found...
+        # now add the offset...
+
+        ActualSongKey = ActualSongKey + SongOffset
+
+        # wrap around if necessary...
+        if ActualSongKey > 11:
+            ActualSongKey = ActualSongKey - 12
+
+    return ActualSongKey
+
+
+#   Given a string which holds a chord, e.g. 'Gbm' , 'C' , 'C#' etc
+#   and an offset - return the updated chord string
+def ConvertChord(ChordString, Offset):
+
+    global SongDataList
+    global SongKeys
+    global SongKeys_Alt
+    global SongPreferences
+
+    Ptr1 = 0
+    TempString = ''
+    IsMinor = 0
+    while Ptr1 < len(ChordString):
+        if ChordString[Ptr1] == 'M':
+            IsMinor = 1
+        else:
+            TempString = TempString+ChordString[Ptr1]
+        Ptr1 = Ptr1+1
+
+    if len(TempString) > 2:
+        print("Weird?")
+
+    Ptr3 = 0
+
+    ActualSongKey = -1
+
+    while Ptr3 < 11 and ActualSongKey == -1:
+        if SongKeys[Ptr3] == TempString or SongKeys_Alt[Ptr3] == TempString:
+            ActualSongKey = Ptr3
+        Ptr3 += 1
+
+    ActualSongKey = ActualSongKey+Offset
+
+    if ActualSongKey > 11:
+        ActualSongKey = ActualSongKey-12
+        # print("Chordstring:" + ChordString + " Offset:" + str(Offset) + " Final:" + self.SongKeys[ActualSongKey])
+
+    OutputString = SongKeys_Alt[ActualSongKey]
+    if IsMinor == 1:
+        OutputString = OutputString+"m"
+
+    if SongPreferences['SHARPFLAT_C'] == 'C#':
+        OutputString = OutputString.replace('Db', 'C#')
+    if SongPreferences['SHARPFLAT_C'] == 'Db':
+        OutputString = OutputString.replace('C#', 'Db')
+
+    if SongPreferences['SHARPFLAT_D'] == 'D#':
+        OutputString = OutputString.replace('Eb', 'D#')
+    if SongPreferences['SHARPFLAT_D'] == 'Eb':
+        OutputString = OutputString.replace('D#', 'Eb')
+
+    if SongPreferences['SHARPFLAT_F'] == 'F#':
+        OutputString = OutputString.replace('Gb', 'F#')
+    if SongPreferences['SHARPFLAT_F'] == 'Gb':
+        OutputString = OutputString.replace('F#', 'Gb')
+
+    if SongPreferences['SHARPFLAT_G'] == 'G#':
+        OutputString = OutputString.replace('Ab', 'G#')
+    if SongPreferences['SHARPFLAT_G'] == 'Ab':
+        OutputString = OutputString.replace('G#', 'Ab')
+
+    if SongPreferences['SHARPFLAT_A'] == 'A#':
+        OutputString = OutputString.replace('Bb', 'A#')
+    if SongPreferences['SHARPFLAT_A'] == 'Bb':
+        OutputString = OutputString.replace('A#', 'Bb')
+
+
+    return OutputString
+
+
+
+
+
+#   Given the song text, and offset data, work out the updated song text with key change
+#   also, have the option to output in HTML format or non HTML
+#   HTML format is used to display a song on-screen, but non-HTML is used
+#   if we want to edit, but use the transposed key (as we need to use plain text)
+def Derive_Song_Text( HTML_Needed, SongText, SongKey, SongOffset):
+    global SongDataList
+    global SongKeys
+    global SongKeys_Alt
+    global SongPreferences
+
+    ReturnString=""
+
+    #   SongText is in 'SongText' variable - chords are defined with lines beginning with '.'
+    #   First, split the string on newlines.
+
+    SongTextLines = SongText.split('\n')
+
+    #   Now, go through the lines...
+
+    Ptr2 = 0
+
+    SongTextLineNumber = 0
+
+    # Work through all the lines of text
+    while Ptr2 < (len(SongTextLines) - 1):
+
+        # Put the line we're working with into a working variable
+        TextLine = SongTextLines[Ptr2]
+
+        # If its not a blank line
+        if len(TextLine) > 0:
+
+            # is it a command line?
+            if TextLine[0] == '.':
+
+                #   Line begins with '.' - it contains chords - need to work through letter by letter
+
+                Ptr3 = 0  # pointer into the text line
+                OutputLine = ''  # converted line
+
+                # Create a temp line with extra spaces at the end - so we don't read past the end of line.
+                TempLine = TextLine + "   "
+
+                while Ptr3 < len(TextLine):
+
+                    NewValue = ord(TextLine[Ptr3])
+
+                    if 65 <= NewValue <= 71:
+                        # This is a key value
+
+                        # Get the chord
+                        NewString = TextLine[Ptr3]
+
+                        # Check: is this a minor or sharp?
+                        if (TempLine[Ptr3 + 1] == 'M') or (TempLine[Ptr3 + 1] == '#') or (TempLine[Ptr3 + 1] == 'b'):
+                            NewString = NewString + TextLine[Ptr3 + 1]
+                            Ptr3 = Ptr3 + 1
+                            # Check: is this a minor or sharp?
+                            if (TempLine[Ptr3 + 1] == 'M') or (TempLine[Ptr3 + 1] == '#') or (TempLine[Ptr3 + 1] == 'b'):
+                                NewString = NewString + TextLine[Ptr3 + 1]
+                                Ptr3 = Ptr3 + 1
+
+                        # NewString now contains the chord - convert it...
+                        UpdatedChord = ConvertChord(NewString, SongOffset)
+
+                        OutputLine = OutputLine + UpdatedChord
+
+                    else:
+                        OutputLine = OutputLine + TextLine[Ptr3]
+
+                    Ptr3 = Ptr3 + 1
+
+                if HTML_Needed=="YES":
+                    # Now put bold around it..
+                    OutputLine = "<b>" + OutputLine + "</b>"
+            else:
+                OutputLine = TextLine
+        else:
+            # its a blank line
+            OutputLine = '\n '
+
+        if HTML_Needed=="YES":
+            # If we're too far down, go to another display column
+            if SongTextLineNumber > int(SongPreferences['DEFAULTPAGESIZE']) or "===" in TextLine:
+                SongTextLineNumber = 1
+                OutputLine = OutputLine + '</td><td>'
+                # print("NewLine")
+
+        if HTML_Needed=="YES":
+            TextLine = "<p>" + OutputLine + "&nbsp;&nbsp;&nbsp;&nbsp;</p>"
+        else:
+            TextLine = OutputLine
+
+        ReturnString = ReturnString + '\n' + TextLine
+
+        Ptr2 = Ptr2 + 1
+        SongTextLineNumber = SongTextLineNumber + 1
+
+    return ReturnString
+
+#   *****************************************************************************
 #   Main UI window
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
-    #   List holding songs
-
-    # SongDataList - main Data structure
-    # 0 - full file and path name
-    # 1 - lyrics text
-    # 2 - Base key
-    # 3 - Offset
-    # 4 - Basename (just the file name)
-
-    SongDataList = []
-    SongKeys =     ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-    SongKeys_Alt = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
     CurrentSong = ''
     CurrentSongKey = ''
     CurrentOffset = 0
@@ -178,13 +441,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # Location and name of preferences file - this is held in the same directory as the program
     SongPreferencesFileName = ''
 
-    # V0.2: switch to use dictionary so can use a key:value pair.
-    SongPreferences = { 'DUMMY': 'DUMMY'}
-
     #   Default songlist file name - we save after change (transpose etc)
     SaveFileName = 'SongData.json'
 
     def __init__(self, parent=None):
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
 
         super(MainWindow, self).__init__(parent=parent)
         self.setupUi(self)
@@ -197,51 +462,80 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.HomeDirectory = os.getcwd()
         self.SongPreferencesFileName = self.HomeDirectory+'\\OpenSongViewerPrefs.json'
 
-        self.SongText.setText('Hello there<br><br><i>OpenSongViewer version '+VersionNumber+'<br><br>'+VersionInformation+'</i>')
+        IntroText="Hello there<br><br>"
+        IntroText=IntroText+"<i>OpenSongViewer version "+VersionNumber+"   "
+        IntroText = IntroText +VersionInformation+"</i><br><br>"
+
+        IntroText = IntroText +"Remember to set the location of your OpenSong songs in the preferences<br><br>"
+
+        IntroText = IntroText +"Click on <br>"
+        IntroText = IntroText +" * Add - to add a song to the song list<br>"
+        IntroText = IntroText +" * Rem - to remove the current selected song to the song list<br>"
+        IntroText = IntroText +" * Edit - to edit the current selected song to the song list<br><br>"
+
+        IntroText = IntroText +"Remember to save your song list using 'Song List' -> 'Save As...' - it'll retain order and keys<br>"
+        IntroText = IntroText +"Remember to check your current preferences under the file menu<br>"
+        IntroText = IntroText +"<br>"
+
+        IntroText = IntroText +"Changelog:<br>"
+        IntroText = IntroText +"0.5 - bugfix - when transposing and base key was 'B' the value key didn't update<br>"
+        IntroText = IntroText +" * Improvement - when you select a song in the songlist, you can now use right and left cursor or arrows under the songlist to move up and down the list<br>"
+        IntroText = IntroText +" * Improvement - new preference setting - when editing, you can choose to always edit in the original base key, or edit in the current transposed value<br>"
+        IntroText = IntroText +" - NOTE - if you edit in the current transposed value, this will overwrite the original base key<br>"
+        IntroText = IntroText +" - this means that chord characters can move slightly when the base key switches from a single to a double character  - e.g. 'C' to 'Db'<br>"
+
+
+        self.SongText.setText(IntroText)
 
         # try to pull in the preferences
         try:
             with open(self.SongPreferencesFileName) as f:
-                self.SongPreferences = json.load(f)
+                SongPreferences = json.load(f)
 
         except:
             # none found - set default prefs.
-            self.SongPreferences['PREFSVER'] = '0.4'
-            self.SongPreferences['SONGDIR'] = self.HomeDirectory
-            self.SongPreferences['DEFAULTFONTSIZE'] = '25'
-            self.SongPreferences['DEFAULTPAGESIZE'] = '38'
-            self.SongPreferences['SHARPFLAT_C'] = 'C#'
-            self.SongPreferences['SHARPFLAT_D'] = 'D#'
-            self.SongPreferences['SHARPFLAT_F'] = 'F#'
-            self.SongPreferences['SHARPFLAT_G'] = 'G#'
-            self.SongPreferences['SHARPFLAT_A'] = 'A#'
+            SongPreferences['PREFSVER'] = '0.5'
+            SongPreferences['SONGDIR'] = self.HomeDirectory
+            SongPreferences['DEFAULTFONTSIZE'] = '25'
+            SongPreferences['DEFAULTPAGESIZE'] = '38'
+            SongPreferences['SHARPFLAT_C'] = 'C#'
+            SongPreferences['SHARPFLAT_D'] = 'D#'
+            SongPreferences['SHARPFLAT_F'] = 'F#'
+            SongPreferences['SHARPFLAT_G'] = 'G#'
+            SongPreferences['SHARPFLAT_A'] = 'A#'
+            SongPreferences['EDIT_USE_ORIGINALKEY'] = 'ORIGINALKEY'
 
-        if type(self.SongPreferences) is list:
+        if type(SongPreferences) is list:
             # V0.1 preferences used lists instead of dict - convert and re-save
             print('Old V0.1 preferences file format - upgraded to v0.2')
-            OLDPrefs=self.SongPreferences
-            self.SongPreferences={}
-            self.SongPreferences['PREFSVER'] = '0.2'
-            self.SongPreferences['SONGDIR'] = OLDPrefs[0][1]
+            OLDPrefs=SongPreferences
+            SongPreferences={}
+            SongPreferences['PREFSVER'] = '0.2'
+            SongPreferences['SONGDIR'] = OLDPrefs[0][1]
 
             # Overwrite old file
             with open(self.SongPreferencesFileName, 'w') as f:
-                json.dump(self.SongPreferences, f)
+                json.dump(SongPreferences, f)
 
-        if self.SongPreferences['PREFSVER'] == '0.2':
+        if SongPreferences['PREFSVER'] == '0.2':
             #   Upgrade preferences values - put in default values.
-            self.SongPreferences['PREFSVER'] = '0.3'
-            self.SongPreferences['DEFAULTFONTSIZE'] = '25'
-            self.SongPreferences['SHARPFLAT_C'] = 'C#'
-            self.SongPreferences['SHARPFLAT_D'] = 'D#'
-            self.SongPreferences['SHARPFLAT_F'] = 'F#'
-            self.SongPreferences['SHARPFLAT_G'] = 'G#'
-            self.SongPreferences['SHARPFLAT_A'] = 'A#'
+            SongPreferences['PREFSVER'] = '0.3'
+            SongPreferences['DEFAULTFONTSIZE'] = '25'
+            SongPreferences['SHARPFLAT_C'] = 'C#'
+            SongPreferences['SHARPFLAT_D'] = 'D#'
+            SongPreferences['SHARPFLAT_F'] = 'F#'
+            SongPreferences['SHARPFLAT_G'] = 'G#'
+            SongPreferences['SHARPFLAT_A'] = 'A#'
 
-        if self.SongPreferences['PREFSVER'] == '0.3':
-            self.SongPreferences['PREFSVER'] = '0.4'
-            self.SongPreferences['DEFAULTPAGESIZE'] = '38'
+        if SongPreferences['PREFSVER'] == '0.3':
+            SongPreferences['PREFSVER'] = '0.4'
+            SongPreferences['DEFAULTPAGESIZE'] = '38'
 
+        if SongPreferences['PREFSVER'] == '0.4':
+            #   0.5 brings in edit use original key, or use transposed value
+            #       normal is to keep the base key
+            SongPreferences['PREFSVER'] = '0.5'
+            SongPreferences['EDIT_USE_ORIGINALKEY'] = 'ORIGINALKEY'
 
         self.InterpretPreferences()
 
@@ -265,13 +559,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionPreferences.triggered.connect(self.UpdatePrefs)
         self.actionAbout.triggered.connect(self.AboutWindow)
 
+        self.NextSong.clicked.connect(self.MoveNextSong)
+        self.PrevSong.clicked.connect(self.MovePrevSong)
+
 
     #   Do anything based on preferences settings - copy values to variables etc.
     def InterpretPreferences(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         # Go through the preferences and set variables.
 
-        self.SongLocation = self.SongPreferences['SONGDIR']
+        self.SongLocation = SongPreferences['SONGDIR']
 
     #   General routine to ask a query on screen
     def AskQuery(self,QueryTitle,QueryText):
@@ -292,6 +594,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   Save the current song list, but specify a location.
     def SaveSongListAs(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         # Set the new default file name for songs.
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -311,12 +618,100 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.SaveSongList()
 
 
+    def NavigateSong(self,Direction):
+        #   Improvement 20210401
+        #   Click in the Main SongList - you can then use right and left keys to
+        #   move through the songs instead of having to click on specific songs
+        #   its slightly more efficient when playing live...
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
+        #   Get the total rows in the list, so we can wrap around
+        TotalRows=self.SongListModel.rowCount()
+        #   And the current song
+        CurrentSelected=self.SongList.currentIndex().row()
+
+        if Direction == "DOWN":
+            NewSelected = CurrentSelected + 1
+            print("Next song")
+        else:
+            NewSelected = CurrentSelected - 1
+            print("Previous song")
+
+        #   We only want to do stuff if there's a list there...
+        if TotalRows>0:
+
+            #   Do we need to wrap around?
+            if NewSelected<0:
+                NewSelected=TotalRows-1
+            if NewSelected>=TotalRows:
+                NewSelected=0
+
+            # print("Total:"+str(TotalRows)+" Current:"+str(CurrentSelected)+" New:"+str(NewSelected))
+
+            #   Set the updated selection value
+            index = self.SongListModel.index(NewSelected, 0, QModelIndex())
+            self.SongList.setCurrentIndex(index)
+
+            #   To display the song, we need the song title, so get it from the list...
+            SongTitle=self.SongListModel.index(NewSelected, 0).data()
+
+            #   and display the updated song.
+            self.DisplaySong(SongTitle)
+
+
+
+    def MoveNextSong(self):
+
+        self.NavigateSong("DOWN")
+
+    def MovePrevSong(self):
+        self.NavigateSong("UP")
+
+    def keyPressEvent(self, event):
+
+        #   Improvement 20210401
+        #   Click in the Main SongList - you can then use right and left keys to
+        #   move through the songs instead of having to click on specific songs
+        #   its slightly more efficient when playing live...
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
+        #   Get the total rows in the list, so we can wrap around
+        TotalRows=self.SongListModel.rowCount()
+        #   And the current song
+        CurrentSelected=self.SongList.currentIndex().row()
+        #   Use -1 as 'no movement'
+        NewSelected=-1
+
+        #   If we press right or left, capture it and set NewSelected
+        if event.key() == Qt.Key_Right:
+            print("Right pressed")
+            self.NavigateSong("DOWN")
+        if event.key() == Qt.Key_Left:
+            print("Left pressed")
+            self.NavigateSong("UP")
+
+
+
     #   Save the song list to the current default file name
     def SaveSongList(self):
         # Take the current songdata and save this to a file e.g. 'SongData.json'
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         SaveFileName = self.SaveFileName
         with open(SaveFileName,'w') as f:
-            json.dump(self.SongDataList,f)
+            json.dump(SongDataList,f)
 
         print("Saved updated song list "+SaveFileName)
 
@@ -324,6 +719,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   Load a song list
     def LoadSongList(self):
         # Identify and load songdata, then update the screen.
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -342,7 +742,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # Now, open then file and read the JSON data.
 
             with open(FName) as f:
-                self.SongDataList = json.load(f)
+                SongDataList = json.load(f)
 
             # Clear out and populate the song list panel.
 
@@ -352,8 +752,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             Ptr = 0
 
             try:
-                while Ptr < len(self.SongDataList):
-                    FName = self.SongDataList[Ptr][4]
+                while Ptr < len(SongDataList):
+                    FName = SongDataList[Ptr][4]
                     item = QStandardItem(FName)
                     self.SongListModel.appendRow(item)
                     Ptr = Ptr+1
@@ -364,12 +764,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def LocateSong(self,SongName):
 
         #   Locate the song...
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         Ptr = 0
         RetValue = -1
 
-        while Ptr < len(self.SongDataList) and RetValue == -1:
+        while Ptr < len(SongDataList) and RetValue == -1:
 
-            if self.SongDataList[Ptr][4] == SongName:
+            if SongDataList[Ptr][4] == SongName:
                 # Located the song information...
                 RetValue = Ptr
 
@@ -380,6 +786,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   Transpose - go down a key
     def TransposeMinusSelected(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         #   Locate the song...
         SongPtr = self.LocateSong(self.CurrentSong)
 
@@ -389,14 +800,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print("Located song")
 
             # Take it down a key
-            self.SongDataList[SongPtr][3] -= 1
+            SongDataList[SongPtr][3] -= 1
 
             # 0 1  2 3  4 5 6  7 8  9  10 11
             # c c# d d# e f f# g g# a  a# b
 
             # Wraparound if necessary
-            if self.SongDataList[SongPtr][3] < 0:
-                self.SongDataList[SongPtr][3] = 11
+            if SongDataList[SongPtr][3] < 0:
+                SongDataList[SongPtr][3] = 11
 
             # now re-display
             self.DisplaySong(self.CurrentSong)
@@ -407,6 +818,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   Transpost - go up a key
     def TransposePlusSelected(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         #   Locate the song...
         SongPtr = self.LocateSong(self.CurrentSong)
 
@@ -416,14 +832,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print("Located song")
 
             # take it up a key
-            self.SongDataList[SongPtr][3] += 1
+            SongDataList[SongPtr][3] += 1
 
             # 0 1  2 3  4 5 6  7 8  9  10 11
             # c c# d d# e f f# g g# a  a# b
 
             # too high - wraparound
-            if self.SongDataList[SongPtr][3] > 11:
-                self.SongDataList[SongPtr][3] = 0
+            if SongDataList[SongPtr][3] > 11:
+                SongDataList[SongPtr][3] = 0
 
             # now re-display
             self.DisplaySong(self.CurrentSong)
@@ -432,76 +848,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.SaveSongList()
 
 
-    #   Given a string which holds a chord, e.g. 'Gbm' , 'C' , 'C#' etc
-    #   and an offset - return the updated chord string
-    def ConvertChord(self, ChordString, Offset):
-
-        Ptr1 = 0
-        TempString = ''
-        IsMinor = 0
-        while Ptr1 < len(ChordString):
-            if ChordString[Ptr1] == 'M':
-                IsMinor = 1
-            else:
-                TempString = TempString+ChordString[Ptr1]
-            Ptr1 = Ptr1+1
-
-        if len(TempString) > 2:
-            print("Weird?")
-
-        Ptr3 = 0
-
-        ActualSongKey = -1
-
-        while Ptr3 < 11 and ActualSongKey == -1:
-            if self.SongKeys[Ptr3] == TempString or self.SongKeys_Alt[Ptr3] == TempString:
-                ActualSongKey = Ptr3
-            Ptr3 += 1
-
-        ActualSongKey = ActualSongKey+Offset
-
-        if ActualSongKey > 11:
-            ActualSongKey = ActualSongKey-12
-            # print("Chordstring:" + ChordString + " Offset:" + str(Offset) + " Final:" + self.SongKeys[ActualSongKey])
-
-        OutputString = self.SongKeys_Alt[ActualSongKey]
-        if IsMinor == 1:
-            OutputString = OutputString+"m"
-
-        if self.SongPreferences['SHARPFLAT_C'] == 'C#':
-            OutputString = OutputString.replace('Db', 'C#')
-        if self.SongPreferences['SHARPFLAT_C'] == 'Db':
-            OutputString = OutputString.replace('C#', 'Db')
-
-        if self.SongPreferences['SHARPFLAT_D'] == 'D#':
-            OutputString = OutputString.replace('Eb', 'D#')
-        if self.SongPreferences['SHARPFLAT_D'] == 'Eb':
-            OutputString = OutputString.replace('D#', 'Eb')
-
-        if self.SongPreferences['SHARPFLAT_F'] == 'F#':
-            OutputString = OutputString.replace('Gb', 'F#')
-        if self.SongPreferences['SHARPFLAT_F'] == 'Gb':
-            OutputString = OutputString.replace('F#', 'Gb')
-
-        if self.SongPreferences['SHARPFLAT_G'] == 'G#':
-            OutputString = OutputString.replace('Ab', 'G#')
-        if self.SongPreferences['SHARPFLAT_G'] == 'Ab':
-            OutputString = OutputString.replace('G#', 'Ab')
-
-        if self.SongPreferences['SHARPFLAT_A'] == 'A#':
-            OutputString = OutputString.replace('Bb', 'A#')
-        if self.SongPreferences['SHARPFLAT_A'] == 'Bb':
-            OutputString = OutputString.replace('A#', 'Bb')
-
-
-        return OutputString
-
-
     #   Given a song name, put the song text onto screen
     #   Note - if the song offset is not zero, it transposes to the correct chord
     #          we don't ever overwrite the original chords - we re-work out each time
     #          doing it this way means that the positioning won't change if you keep transposing.
     def DisplaySong(self,SongName):
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
 
         #   Locate the song...
         Ptr = self.LocateSong(SongName)
@@ -510,43 +866,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             #   Located the song information...
 
-            SongText = self.SongDataList[Ptr][1]
-            SongKey = self.SongDataList[Ptr][2]
-            SongOffset = self.SongDataList[Ptr][3]
+            SongText = SongDataList[Ptr][1]
+            SongKey = SongDataList[Ptr][2]
+            SongOffset = SongDataList[Ptr][3]
 
-            # Work out the actual key
-            # i.e. the original key + the offset
-            Ptr3 = 0
-
-            ActualSongKey = -1
-
-            while Ptr3 < 11 and ActualSongKey == -1:
-                if self.SongKeys[Ptr3] == SongKey or self.SongKeys_Alt[Ptr3] == SongKey:
-                    ActualSongKey = Ptr3
-                Ptr3 += 1
-
-            if ActualSongKey > -1:
-                # i.e. the key was found...
-                # now add the offset...
-
-                ActualSongKey = ActualSongKey + SongOffset
-
-                # wrap around if necessary...
-                if ActualSongKey > 11:
-                    ActualSongKey = ActualSongKey - 12
+            ActualSongKey = Derive_Actual_Song_Key( SongKey, SongOffset)
 
             self.CurrentSong = SongName
             self.CurrentSongKey = SongKey
             self.CurrentOffset = SongOffset
-
-            #   SongText is in 'SongText' variable - chords are defined with lines beginning with '.'
-            #   First, split the string on newlines.
-
-            SongTextLines = SongText.split('\n')
-
-            #   Now, go through the lines...
-
-            Ptr2 = 0
 
             #  In order to have the display in columns and have different colours for particular items etc
             #  we use a HTML viewer to display the song text.
@@ -555,7 +883,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             SongTextHeader = "<html><head>"
             SongTextHeader = SongTextHeader + "<style>"
             SongTextHeader = SongTextHeader + "body { background-color: #555555;} "
-            SongTextHeader = SongTextHeader + "p { font-size: "+self.SongPreferences['DEFAULTFONTSIZE']+"px; margin: 0px;} "
+            SongTextHeader = SongTextHeader + "p { font-size: "+SongPreferences['DEFAULTFONTSIZE']+"px; margin: 0px;} "
             SongTextHeader = SongTextHeader + "table { width: 100%; border: 2px solid black; padding 20px;} "
             SongTextHeader = SongTextHeader + "tr { width: 100%; border: 2px solid black; padding 20px;} "
             SongTextHeader = SongTextHeader + "td { border: 2px solid black; padding 5px; background-color: #eeeeee;} "
@@ -563,82 +891,95 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             SongTextHeader = SongTextHeader + "</head>"
             SongTextHeader = SongTextHeader + "<body>"
 
-            SongText = "<table><tr><td>"
 
-            SongTextLineNumber = 0
+            OutputSongText = "<table><tr><td>"
+
+            OutputSongText = OutputSongText + Derive_Song_Text( "YES", SongText, SongKey, SongOffset)
+
+            #   SongText is in 'SongText' variable - chords are defined with lines beginning with '.'
+            #   First, split the string on newlines.
+
+            #SongTextLines = SongText.split('\n')
+
+
+            #   Now, go through the lines...
+
+            #Ptr2 = 0
+
+            #SongTextLineNumber = 0
 
             # Work through all the lines of text
-            while Ptr2 < (len(SongTextLines)-1):
+            #while Ptr2 < (len(SongTextLines)-1):
 
                 # Put the line we're working with into a working variable
-                TextLine = SongTextLines[Ptr2]
+            #    TextLine = SongTextLines[Ptr2]
 
                 # If its not a blank line
-                if len(TextLine) > 0:
+            #    if len(TextLine) > 0:
 
                     # is it a command line?
-                    if TextLine[0] == '.':
+            #        if TextLine[0] == '.':
 
                         #   Line begins with '.' - it contains chords - need to work through letter by letter
 
-                        Ptr3 = 0    # pointer into the text line
-                        OutputLine = ''   # converted line
+            #            Ptr3 = 0    # pointer into the text line
+            #            OutputLine = ''   # converted line
 
                         # Create a temp line with extra spaces at the end - so we don't read past the end of line.
-                        TempLine = TextLine + "   "
+            #            TempLine = TextLine + "   "
 
-                        while Ptr3 < len( TextLine ):
+            #            while Ptr3 < len( TextLine ):
 
-                            NewValue = ord(TextLine[Ptr3])
+            #                NewValue = ord(TextLine[Ptr3])
 
-                            if 65 <= NewValue <= 71:
+            #                if 65 <= NewValue <= 71:
                                 # This is a key value
 
                                 # Get the chord
-                                NewString = TextLine[Ptr3]
+            #                    NewString = TextLine[Ptr3]
 
                                 # Check: is this a minor or sharp?
-                                if (TempLine[Ptr3+1] == 'M') or (TempLine[Ptr3+1] == '#') or (TempLine[Ptr3+1] == 'b'):
-                                    NewString = NewString+TextLine[Ptr3+1]
-                                    Ptr3 = Ptr3+1
+            #                    if (TempLine[Ptr3+1] == 'M') or (TempLine[Ptr3+1] == '#') or (TempLine[Ptr3+1] == 'b'):
+            #                        NewString = NewString+TextLine[Ptr3+1]
+            #                        Ptr3 = Ptr3+1
                                     # Check: is this a minor or sharp?
-                                    if (TempLine[Ptr3+1] == 'M') or (TempLine[Ptr3+1] == '#') or (TempLine[Ptr3+1] == 'b'):
-                                        NewString = NewString+TextLine[Ptr3+1]
-                                        Ptr3 = Ptr3+1
+            #                        if (TempLine[Ptr3+1] == 'M') or (TempLine[Ptr3+1] == '#') or (TempLine[Ptr3+1] == 'b'):
+            #                            NewString = NewString+TextLine[Ptr3+1]
+            #                            Ptr3 = Ptr3+1
 
                                 # NewString now contains the chord - convert it...
-                                UpdatedChord = self.ConvertChord(NewString,SongOffset)
+            #                    UpdatedChord = self.ConvertChord(NewString,SongOffset)
 
-                                OutputLine = OutputLine+UpdatedChord
+            #                    OutputLine = OutputLine+UpdatedChord
 
-                            else:
-                                OutputLine = OutputLine+TextLine[Ptr3]
+            #                else:
+            #                    OutputLine = OutputLine+TextLine[Ptr3]
 
-                            Ptr3 = Ptr3+1
+            #                Ptr3 = Ptr3+1
 
                         # Now put bold around it..
-                        OutputLine = "<b>"+OutputLine+"</b>"
-                    else:
-                        OutputLine = TextLine
-                else:
+            #            OutputLine = "<b>"+OutputLine+"</b>"
+            #        else:
+            #            OutputLine = TextLine
+            #    else:
                     # its a blank line
-                    OutputLine = '\n '
+            #        OutputLine = '\n '
 
                 # If we're too far down, go to another display column
-                if SongTextLineNumber > int(self.SongPreferences['DEFAULTPAGESIZE']) or "===" in TextLine:
-                    SongTextLineNumber = 1
-                    OutputLine = OutputLine+'</td><td>'
+            #    if SongTextLineNumber > int(self.SongPreferences['DEFAULTPAGESIZE']) or "===" in TextLine:
+            #        SongTextLineNumber = 1
+            #        OutputLine = OutputLine+'</td><td>'
                     # print("NewLine")
 
-                TextLine = "<p>"+OutputLine+"&nbsp;&nbsp;&nbsp;&nbsp;</p>"
+            #    TextLine = "<p>"+OutputLine+"&nbsp;&nbsp;&nbsp;&nbsp;</p>"
 
-                SongText = SongText+'\n'+TextLine
+            #    SongText = SongText+'\n'+TextLine
 
-                Ptr2 = Ptr2+1
-                SongTextLineNumber = SongTextLineNumber+1
+            #    Ptr2 = Ptr2+1
+            #    SongTextLineNumber = SongTextLineNumber+1
 
 
-            SongLyricsDisplay = SongText.replace('\n.','<b> ').replace('\n ','</b> ').replace(' ','&nbsp;')
+            SongLyricsDisplay = OutputSongText.replace('\n.','<b> ').replace('\n ','</b> ').replace(' ','&nbsp;')
 
             SongLyricsDisplay = SongLyricsDisplay.replace('SUS','sus')
 
@@ -649,11 +990,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # print(SongLyricsDisplay)
 
             self.SongText.setText(SongLyricsDisplay)
-            self.CurrentKey.setText(self.SongKeys_Alt[ActualSongKey])
+            self.CurrentKey.setText(SongKeys_Alt[ActualSongKey])
 
 
     #   User has clicked on a song on the on-screen list - display the song.
     def SongListSelected(self, index):
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
 
         #   This is the selected song...
         SelectedString = index.data()
@@ -664,9 +1010,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   Remove a song from the song list on screen
     def DelSelectedSong(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         # del the currently selected song - i.e. 'self.CurrentSong'
 
-        Result = self.AskQuery("Delete Song?", "Delete "+self.CurrentSong)
+        Result = self.AskQuery("Remove Song from list?", "Delete "+self.CurrentSong)
 
         if Result == "YES":
             # Yes - delete the item in the on-screen list
@@ -679,19 +1030,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             Ptr = self.LocateSong(self.CurrentSong)
 
             if Ptr >= 0:
-                ToRemove = self.SongDataList[Ptr]
-                self.SongDataList.remove(ToRemove)
+                ToRemove = SongDataList[Ptr]
+                SongDataList.remove(ToRemove)
 
             print("Removed: " + self.CurrentSong)
 
     #   Clear the song list on-screen and data structure
     def ClearAll(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         Result = self.AskQuery("Clear Songlist?", "Clear Songlist?")
 
         if Result == "YES":
             self.SongListModel.clear()
-            self.SongDataList = []
+            SongDataList = []
 
             print("Cleared")
 
@@ -699,12 +1055,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   Save the file in 'OpenSong' format (xml)
     def SaveSong(self,SongName):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         #   Locate the given song
         Ptr = self.LocateSong(self.CurrentSong)
 
         if Ptr >= 0:
             #   Get the data about the song
-            SingleSongData = self.SongDataList[Ptr]
+            SingleSongData = SongDataList[Ptr]
 
             #   Get the default song location and add the song name
             Fname = self.SongLocation + '/' + SongName
@@ -783,11 +1144,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   User has clicked on 'Edit'
     def EditCurrentSong(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         #   Locate the song
         Ptr = self.LocateSong(self.CurrentSong)
 
         if Ptr > -1:
-            SingleSongData = self.SongDataList[Ptr]
+            SingleSongData = SongDataList[Ptr]
 
             #   Initialise and show the song
             dlg = EditWindow(SingleSongData)
@@ -796,11 +1162,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             if dlg.exec_():
                 print("Success!")
                 #   Copy the song data to the main data structure
-                self.SongDataList[Ptr][0] = self.SongLocation+'/'+dlg.ui.FName.text()
-                self.SongDataList[Ptr][1] = dlg.ui.SongText.toPlainText()
-                self.SongDataList[Ptr][2] = dlg.ui.SongKey.currentText()
-                self.SongDataList[Ptr][3] = 0
-                self.SongDataList[Ptr][4] = dlg.ui.FName.text()
+                SongDataList[Ptr][0] = self.SongLocation+'/'+dlg.ui.FName.text()
+                SongDataList[Ptr][1] = dlg.ui.SongText.toPlainText()
+                SongDataList[Ptr][2] = dlg.ui.SongKey.currentText()
+                SongDataList[Ptr][3] = 0
+                SongDataList[Ptr][4] = dlg.ui.FName.text()
                 self.DisplaySong(self.CurrentSong)
                 self.SaveSong(self.CurrentSong)
                 print('Edited song saved')
@@ -809,6 +1175,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     #   User has selected to add a new song
     def NewSong(self):
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
 
         # Create a blank song
         SingleSongData = ['a','a','a',0,'a']
@@ -832,7 +1203,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             #   Up to this point its the same as edit - however, now we need to add the
             #   new song to the on-screen list, and display.
-            self.SongDataList.append(SingleSongData)
+            SongDataList.append(SingleSongData)
             self.CurrentSong = SingleSongData[4]
             item = QStandardItem(self.CurrentSong)
             self.SongListModel.appendRow(item)
@@ -844,6 +1215,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     #   User has selected to add a song to the list
     def AddNewSong(self):
+
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
 
         #   get the user to select a song.
         options = QFileDialog.Options()
@@ -905,7 +1281,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             NewSongData = [FName, SongLyrics[0].text, SongKeyValue, 0, os.path.basename(FName)]
 
             print("append into songdata")
-            self.SongDataList.append(NewSongData)
+            SongDataList.append(NewSongData)
             print("added")
 
             self.SaveSongList()
@@ -923,47 +1299,58 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #   User has selected to edit prefs
     def UpdatePrefs(self):
 
+        global SongDataList
+        global SongKeys
+        global SongKeys_Alt
+        global SongPreferences
+
         #   Initialise window
-        dlg = Prefs(self.SongPreferences)
+        dlg = Prefs()
 
         #   Activate preferences screen
         if dlg.exec_():
             print("Success!")
 
             #   Pick up the values from screen
-            self.SongPreferences['PREFSVER'] = '0.3'
-            self.SongPreferences['SONGDIR'] = dlg.ui.SongDirectory.text()
+            SongPreferences['PREFSVER'] = '0.5'
+            SongPreferences['SONGDIR'] = dlg.ui.SongDirectory.text()
 
-            self.SongPreferences['DEFAULTFONTSIZE'] = dlg.ui.DefaultFontSize.currentText()
-            self.SongPreferences['DEFAULTPAGESIZE'] = dlg.ui.PageSize.currentText()
+            SongPreferences['DEFAULTFONTSIZE'] = dlg.ui.DefaultFontSize.currentText()
+            SongPreferences['DEFAULTPAGESIZE'] = dlg.ui.PageSize.currentText()
 
             if dlg.ui.radioButton_Cs.isChecked():
-                self.SongPreferences['SHARPFLAT_C'] = 'C#'
+                SongPreferences['SHARPFLAT_C'] = 'C#'
             else:
-                self.SongPreferences['SHARPFLAT_C'] = 'Db'
+                SongPreferences['SHARPFLAT_C'] = 'Db'
 
             if dlg.ui.radioButton_Ds.isChecked():
-                self.SongPreferences['SHARPFLAT_D'] = 'D#'
+                SongPreferences['SHARPFLAT_D'] = 'D#'
             else:
-                self.SongPreferences['SHARPFLAT_D'] = 'Eb'
+                SongPreferences['SHARPFLAT_D'] = 'Eb'
 
             if dlg.ui.radioButton_Fs.isChecked():
-                self.SongPreferences['SHARPFLAT_F'] = 'F#'
+                SongPreferences['SHARPFLAT_F'] = 'F#'
             else:
-                self.SongPreferences['SHARPFLAT_F'] = 'Gb'
+                SongPreferences['SHARPFLAT_F'] = 'Gb'
 
             if dlg.ui.radioButton_Gs.isChecked():
-                self.SongPreferences['SHARPFLAT_G'] = 'G#'
+                SongPreferences['SHARPFLAT_G'] = 'G#'
             else:
-                self.SongPreferences['SHARPFLAT_G'] = 'Ab'
+                SongPreferences['SHARPFLAT_G'] = 'Ab'
 
             if dlg.ui.radioButton_As.isChecked():
-                self.SongPreferences['SHARPFLAT_A'] = 'A#'
+                SongPreferences['SHARPFLAT_A'] = 'A#'
             else:
-                self.SongPreferences['SHARPFLAT_A'] = 'Bb'
+                SongPreferences['SHARPFLAT_A'] = 'Bb'
+
+            #   0.5 20210402 - edit using original key or transposed key
+            if dlg.ui.EditOriginalKey.isChecked():
+                SongPreferences['EDIT_USE_ORIGINALKEY'] = 'ORIGINALKEY'
+            else:
+                SongPreferences['EDIT_USE_ORIGINALKEY'] = 'TRANSPOSEDKEY'
 
             with open(self.SongPreferencesFileName, 'w') as f:
-                json.dump(self.SongPreferences, f)
+                json.dump(SongPreferences, f)
 
             # Set up preference variables.
             self.InterpretPreferences()

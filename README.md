@@ -40,6 +40,14 @@ Stand alone binary releases are in the 'Releases' area - go to https://github.co
 - Preferences now allows you to select number of lines to a page (column split)
 - When editing an existing file, program now preserves other information from the file (e.g. author, CCLI number etc) that may have been entered by OpenSong main program. If the song is a new song, then all fields are left blank apart from Song Title, Lyrics and (base) key.
 
+### V0.5
+- bugfix - when transposing and base key was 'B' the value key didn't update
+- Improvement - when you select a song in the songlist, you can now use right and left cursor or arrows under the songlist to move up and down the list
+- Improvement - new preference setting - when editing, you can choose to always edit in the original base key, or edit in the current transposed value
+- - NOTE - if you edit in the current transposed value, this will overwrite the original base key
+               this means that chord characters can move slightly when the base key switches from a single to a double character  - e.g. 'C' to 'Db'
+
+
 # Description
 
 I've been using OpenSong for a while now - the concept has been both simple, yet versitile enough to use on a daily basis when playing 'live' - I've especially liked the ability to transpose any song into any key I desire - its meant I've not had to carry around multiple copies of song sheets with me.
@@ -63,7 +71,7 @@ When you open the viewer, you should have a main screen split broadly into three
 
 The Controls section has a number of controls:
 * Add - bring up a file selection so you can choose an OpenSong song to add to the main song list.
-* Del - remove _the currently selected song_ from the song list.
+* Rem - remove _the currently selected song_ from the song list.
 * Edit - edit _the currently selected song_ in the song list (brings up the edit dialog)
 
 * < and > allow you to transpose the key of the currently selected song
