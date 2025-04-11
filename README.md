@@ -47,6 +47,41 @@ Stand alone binary releases are in the 'Releases' area - go to https://github.co
 - - NOTE - if you edit in the current transposed value, this will overwrite the original base key
                this means that chord characters can move slightly when the base key switches from a single to a double character  - e.g. 'C' to 'Db'
 
+### V0.6
+- Improvement - Better use of song-text space - removal of leading '.' and ' ' characters, removal of [===] lines
+- Improvement - You can now specify font size override for specific songs (or just use the default)
+                You can also specify the page size, or pick 'Default'
+                NOTE: this breaks compatibility with old saved song list - old song lists cannot be loaded.
+- Improvement - New load-song dialog - this now shows the folder listing, and when you click on a song it shows
+                this in a preview window. Double click or select 'OK' to add the song to the current song list.
+
+### V0.7
+- General updates
+         * more efficient use of song text space (remove leading '.' and ' ', and [===] from output text)
+         * can now set font size for individual song, or select 'Default'
+         * viewer can now detect and adjust for portrait screens
+           also, pagebreaks for Landscape [=L=] and Portrait [=P=]
+  !!!WARNING!!! - This is NOT compatible with old saved song lists
+         * Load song dialog now shows a preview'
+        
+
+### V0.8 - Save songlist structure updates
+  - * Noted an issue - the song text is saved with the song list so you can potentially overwrite an updated
+           song 
+           if you edit an old song list. So, now songlists only save the list of songs, and also the keys - when loading the song text is re-loaded from the song files. 
+  !!!WARNING!!! - This is NOT compatible with old saved song lists
+
+### V0.9 - Song open and search updates<br>
+  - Improved the ability to search for songs when adding songs to the list< 
+           When the open dialog opens, you can just start typing, and it will filter the 
+           list - if the song name, or the contents of the file matches the text
+        
+### V0.9a - use up and down keys in the search screen with enter to select
+
+### V0.91 - Use of CSS to use proportional fonts - major change to logic
+          Also Added 'produce diagnostic log files' to preferences.
+
+
 
 # Description
 
@@ -125,14 +160,16 @@ The preferences screen simply allows you to
 Here's a list of alterations that I'm actively considering (please drop me a line if there's other things that would be useful)
 
 * Setting default font size within the preferences for song text - _Released in 0.3_
-* Setting font size on a song-by-song basis (it would use the 'user' field within the OpenSong file format
-* Updated method of Chord positioning
+* Setting font size on a song-by-song basis (it would use the 'user' field within the OpenSong file format - _Released in 0.6_
+* Updated method of Chord positioning _Released in 0.91_
 * In preferences, set preferences for sharp and flat chords - _Released in 0.3_
 
 ## Updated method of Chord positioning
 At the moment, a procedure works along a chord line (which begins with '.') and effectively does a string replace.
 While this works, it can mean chords move slightly in comparison to the lyrics which are on the next line.
 An alternative would be to do an initial scan of the chord line, noting where each of the chords is (i.e. position in the line), and when each chord is transposed, then ensure its at the right location.
+
+0.91: Major update to logic - while the original 'normal' opensong format is used to store and edit files, (i.e. one line of chords, one line of lyrics), internally the two lines are merged. The main display window has moved away from plaintext widget to use the more powerful QWebEngine - this understands more complex CSS which is used to display the chords above the lyrics. As this is handled by CSS, it means that proportional fonts are now used.
 
 ## Chord preferences for sharp and flats - Released in 0.3
 At the moment, the program is hard wired for particular chords - e.g. if it locates a G#, it replaces this with Ab.
